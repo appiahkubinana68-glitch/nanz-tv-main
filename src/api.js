@@ -1,7 +1,6 @@
 import axios from "axios";
 
-// ✅ CORRECT URL — matches backend
 export const api = axios.create({
   baseURL: "/api",
-  timeout: 15000,
+  timeout: 20000,
 });

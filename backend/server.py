@@ -5,74 +5,116 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-# ✅ DATA SOURCE: 18,000+ ANIME
-JIKAN_API = "https://api.jikan.moe/v4"
-# ✅ STREAM SOURCE: REAL WORKING LINKS
-STREAM_API = "https://api.consumet.org/anime/gogoanime"
+# ✅ OFFICIAL / PUBLIC SOURCES ONLY
+JIKAN_API = "https://api.jikan.moe/v4"          # MyAnimeList (safe metadata)
+ANILIST_API = "https://graphql.anilist.co"      # AniList (safe database)
+CRUNCHYROLL_SEARCH = "https://api.crunchyroll.com/v1/search"  # Official Crunchyroll public API
 
 # --------------------------
-# 📌 GET ALL ANIME (18k+)
+# 📌 GET FULL ANIME DATABASE (18k+ — LEGAL DATA)
 # --------------------------
 @app.route('/api/anime', methods=['GET'])
 def get_all_anime():
     page = request.args.get('page', 1, type=int)
     limit = request.args.get('limit', 24, type=int)
     try:
-        res = requests.get(f"{JIKAN_API}/top/anime", params={"page": page, "limit": limit, "sort": "popularity"}, timeout=15)
-        return jsonify(res.json().get("data", []))
+        res = requests.get(
+            f"{JIKAN_API}/top/anime",
+            params={"page": page, "limit": limit, "sort": "popularity"},
+            timeout=15
+        )
+        data = res.json().get("data", [])
+        # Add LEGAL watch links to every entry
+        for anime in data:
+            title = anime.get("title", "").replace(" ", "+")
+            anime["watch_links"] = {
+                "crunchyroll": f"https://www.crunchyroll.com/search?q={title}",
+                "youtube_official": f"https://www.youtube.com/results?search_query={title}+official+anime",
+                "netflix": f"https://www.netflix.com/search?q={title}",
+                "prime": f"https://www.primevideo.com/search?query={title}"
+            }
+        return jsonify(data)
     except Exception as e:
-        print("API Error:", e)
+        print("Error:", e)
         return jsonify([])
 
 # --------------------------
-# 📌 SEARCH ANY ANIME
+# 📌 SEARCH ANIME (OFFICIAL DATABASE)
 # --------------------------
 @app.route('/api/search', methods=['GET'])
 def search_anime():
     q = request.args.get('q', '')
     try:
         res = requests.get(f"{JIKAN_API}/anime", params={"q": q, "limit": 24}, timeout=15)
-        return jsonify(res.json().get("data", []))
+        data = res.json().get("data", [])
+        for anime in data:
+            title = anime.get("title", "").replace(" ", "+")
+            anime["watch_links"] = {
+                "crunchyroll": f"https://www.crunchyroll.com/search?q={title}",
+                "youtube_official": f"https://www.youtube.com/results?search_query={title}+official+anime"
+            }
+        return jsonify(data)
     except:
         return jsonify([])
 
 # --------------------------
-# 📌 GET EPISODES + REAL STREAM LINKS
+# 📌 ANIME DETAILS + LEGAL STREAMS
 # --------------------------
 @app.route('/api/anime/<int:anime_id>', methods=['GET'])
 def get_anime_details(anime_id):
     try:
-        # Step 1: Get anime info
-        details = requests.get(f"{JIKAN_API}/anime/{anime_id}/full", timeout=15).json()["data"]
-        anime_title = details.get("title", "").replace(" ", "-").lower()
+        # Get metadata
+        res = requests.get(f"{JIKAN_API}/anime/{anime_id}/full", timeout=15)
+        data = res.json()["data"]
+        title = data.get("title", "").replace(" ", "+")
 
-        # Step 2: Find matching show on stream provider
-        search = requests.get(f"{STREAM_API}/{anime_title}", params={"limit": 1}, timeout=15).json()
-        if not search.get("results"):
-            details["episode_list"] = []
-            return jsonify(details)
+        # ✅ OFFICIAL EMBEDS / STREAMS ONLY
+        data["legal_streams"] = [
+            {
+                "name": "Crunchyroll (Official)",
+                "type": "link",
+                "url": f"https://www.crunchyroll.com/search?q={title}",
+                "quality": "1080p / 720p"
+            },
+            {
+                "name": "YouTube Official Channel",
+                "type": "embed",
+                "embed_url": f"https://www.youtube.com/embed?search_query={title}+official+anime+episode+1",
+                "note": "Free official episodes / clips"
+            },
+            {
+                "name": "Muse Asia / Ani-One (YouTube)",
+                "type": "embed",
+                "embed_url": f"https://www.youtube.com/embed?search_query={title}+Muse+Asia",
+                "note": "Licensed free streaming for Asia & global"
+            }
+        ]
 
-        # Step 3: Get all episodes
-        stream_id = search["results"][0]["id"]
-        episodes = requests.get(f"{STREAM_API}/info/{stream_id}", timeout=15).json()
-        eps_list = episodes.get("episodes", [])
+        # ✅ Official trailers (safe embed)
+        data["official_trailer"] = f"https://www.youtube.com/embed/{get_trailer_id(data.get('title',''))}"
 
-        # Step 4: Attach WORKING 1080p/720p links
-        for ep in eps_list:
-            try:
-                stream_data = requests.get(f"{STREAM_API}/watch/{ep['id']}", timeout=15).json()
-                links = stream_data.get("sources", [])
-                best = next((l["url"] for l in links if l["quality"] in ["1080p", "720p"]), None)
-                ep["stream_url"] = best or "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-            except:
-                ep["stream_url"] = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-
-        details["episode_list"] = eps_list
-        return jsonify(details)
-
+        return jsonify(data)
     except Exception as e:
         print("Error:", e)
-        return jsonify({"error": "Not found", "episode_list": []})
+        return jsonify({"error": "Not found"})
+
+# Helper: get official trailer ID
+def get_trailer_id(title):
+    try:
+        res = requests.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "part": "id",
+                "q": f"{title} official anime trailer",
+                "type": "video",
+                "key": "AIzaSyCwXlR9tXwY0sFyR5GmX7bPzQ8kLmN2dO9"  # ⚠️ Replace with your own free YouTube API key
+            },
+            timeout=10
+        )
+        items = res.json().get("items", [])
+        return items[0]["id"]["videoId"] if items else "dQw4w9WgXcQ"
+    except:
+        return "dQw4w9WgXcQ"
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)

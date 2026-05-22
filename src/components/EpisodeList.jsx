@@ -26,7 +26,7 @@ const EpisodeList = ({ malId, animeTitle, animeImage, totalEpisodes, onPlay }) =
       finally { if (mounted) setLoading(false); }
     })();
     return () => { mounted = false; };
-  }, [malId, page]);
+  }, [malId, page,user]);
 
   useEffect(() => {
     if (!user) { setWatchedSet(new Set()); setLastEpisode(0); return; }
@@ -37,7 +37,7 @@ const EpisodeList = ({ malId, animeTitle, animeImage, totalEpisodes, onPlay }) =
         setLastEpisode(r.data?.last_episode || 0);
       } catch {}
     })();
-  }, [malId, user?.user_id]);
+  }, [malId, user]);
 
   const toggle = async (epNum) => {
     if (!user) { toast.error("Sign in to track progress (free)"); return; }

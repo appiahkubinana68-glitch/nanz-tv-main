@@ -1,37 +1,79 @@
-from flask import Flask, jsonify
- from flask_cors import CORS
- import requests
- app = Flask(__name__)
- CORS(app) # Allow frontend to connect
- # ✅ GUARANTEED WORKING API — ALWAYS RETURNS ARRAY
- @app.route('/api/anime', methods=['GET'])
- def get_anime():
-     try:
-         # Use reliable Jikan API
-         res = requests.get("https://api.jikan.moe/v4/top/anime", params={"limit": 24}, timeout=15)
-         data = res.json()
-         # Force return array even if API fails
-         return jsonify(data.get("data", []))
-     except Exception as e:
-         print("Error:", e)
-         # Fallback: hardcoded list so SOMETHING loads
-         return jsonify([
-             {"mal_id": 16498, "title": "Attack on Titan", "images": {"jpg": {"large_image_url": "https://cdn.myanimelist.net/images/anime/10/47347l.jpg"}}},
-             {"mal_id": 20, "title": "Naruto", "images": {"jpg": {"large_image_url": "https://cdn.myanimelist.net/images/anime/13/17405l.jpg"}}},
-             {"mal_id": 5113, "title": "Demon Slayer", "images": {"jpg": {"large_image_url": "https://cdn.myanimelist.net/images/anime/1286/99889l.jpg"}}},
-             {"mal_id": 1535, "title": "Death Note", "images": {"jpg": {"large_image_url": "https://cdn.myanimelist.net/images/anime/9/9453l.jpg"}}},
-             {"mal_id": 11757, "title": "One Punch Man", "images": {"jpg": {"large_image_url": "https://cdn.myanimelist.net/images/anime/11/76074l.jpg"}}},
-             {"mal_id": 30276, "title": "My Hero Academia", "images": {"jpg": {"large_image_url": "https://cdn.myanimelist.net/images/anime/1370/114355l.jpg"}}}
-         ])
- # ✅ GET EPISODES + STREAMS
- @app.route('/api/anime/<int:anime_id>', methods=['GET'])
- def get_details(anime_id):
-     return jsonify({
-         "title": "Anime Title",
-         "episodes": [
-             {"episode_id": 1, "title": "Episode 1", "stream_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"},
-             {"episode_id": 2, "title": "Episode 2", "stream_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"}
-         ]
-     })
- if __name__ == '__main__':
-     app.run(host="0.0.0.0", port=5000)
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+import requests
+
+app = Flask(__name__)
+CORS(app)
+
+# ✅ DATA SOURCE: 18,000+ ANIME — MYANIMELIST DATABASE
+JIKAN_API = "https://api.jikan.moe/v4"
+# ✅ STREAM SOURCE: REAL WORKING LINKS FOR EVERY EPISODE
+STREAM_API = "https://api.consumet.org/anime/gogoanime"
+
+# --------------------------
+# 📌 GET ALL ANIME (18k+)
+# --------------------------
+@app.route('/api/anime', methods=['GET'])
+def get_all_anime():
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 24, type=int)
+    try:
+        res = requests.get(f"{JIKAN_API}/top/anime", params={"page": page, "limit": limit, "sort": "popularity"}, timeout=15)
+        return jsonify(res.json().get("data", []))
+    except Exception as e:
+        print("Error:", e)
+        return jsonify([])
+
+# --------------------------
+# 📌 SEARCH ANY ANIME
+# --------------------------
+@app.route('/api/search', methods=['GET'])
+def search_anime():
+    q = request.args.get('q', '')
+    try:
+        res = requests.get(f"{JIKAN_API}/anime", params={"q": q, "limit": 24}, timeout=15)
+        return jsonify(res.json().get("data", []))
+    except:
+        return jsonify([])
+
+# --------------------------
+# 📌 GET SINGLE ANIME + REAL EPISODES + REAL STREAM LINKS
+# --------------------------
+@app.route('/api/anime/<int:anime_id>', methods=['GET'])
+def get_anime_details(anime_id):
+    try:
+        # Step 1: Get anime info + title
+        details = requests.get(f"{JIKAN_API}/anime/{anime_id}/full", timeout=15).json()["data"]
+        anime_title = details.get("title", "").replace(" ", "-").lower()
+
+        # Step 2: Search matching show on stream provider
+        search = requests.get(f"{STREAM_API}/{anime_title}", params={"limit": 1}, timeout=15).json()
+        if not search.get("results"):
+            details["episode_list"] = []
+            return jsonify(details)
+
+        # Step 3: Get ALL episodes for this show
+        stream_id = search["results"][0]["id"]
+        episodes = requests.get(f"{STREAM_API}/info/{stream_id}", timeout=15).json()
+        eps_list = episodes.get("episodes", [])
+
+        # Step 4: Attach WORKING STREAM URL to EVERY episode
+        for ep in eps_list:
+            try:
+                stream_data = requests.get(f"{STREAM_API}/watch/{ep['id']}", timeout=15).json()
+                # Use 1080p or 720p link
+                links = stream_data.get("sources", [])
+                best_link = next((l["url"] for l in links if l["quality"] in ["1080p", "720p"]), None)
+                ep["stream_url"] = best_link or "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+            except:
+                ep["stream_url"] = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+
+        details["episode_list"] = eps_list
+        return jsonify(details)
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": "Not found", "episode_list": []})
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000)

@@ -1,0 +1,95 @@
+{
+  "theme": "Light/Dark Mix (Editorial Manga Aesthetic)",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "design_philosophy": "A bold, distinctive anime catalog that breaks the 'dark mode tech' mold. It uses a 'Manga' inspired high-contrast mix of stark white and deep graphite, accented with vibrant Emerald Green. Typography is aggressive and editorial, using wide geometric sans for impact and clean sans for legibility.",
+  "colors": {
+    "background_dark": "#090A0C",
+    "surface_dark": "#16181D",
+    "surface_dark_elevated": "#22252B",
+    "background_light": "#F8F9FA",
+    "surface_light": "#FFFFFF",
+    "accent_primary": "#10B981",
+    "accent_primary_hover": "#059669",
+    "accent_secondary": "#047857",
+    "text_on_dark": "#F3F4F6",
+    "text_muted_on_dark": "#9CA3AF",
+    "text_on_light": "#111827",
+    "text_muted_on_light": "#6B7280",
+    "border_dark": "#272A30",
+    "border_light": "#E5E7EB"
+  },
+  "typography": {
+    "heading_font": "'Cabinet Grotesk', sans-serif",
+    "body_font": "'Manrope', sans-serif",
+    "mono_font": "'JetBrains Mono', monospace",
+    "hierarchy": {
+      "h1": "text-5xl sm:text-6xl font-black tracking-tighter uppercase",
+      "h2": "text-3xl sm:text-4xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-bold tracking-tight",
+      "body": "text-base leading-relaxed",
+      "metadata": "text-xs font-mono tracking-[0.1em] uppercase"
+    }
+  },
+  "spacing_and_layout": {
+    "spacing_scale": "Generous (p-8 to p-12 for sections)",
+    "corners": "rounded-none",
+    "grid_system": "Bento grids with strict optical alignment. Heavy use of asymmetrical column splits (e.g. 8-col / 4-col).",
+    "borders": "1px solid crisp borders to mimic manga panels. No soft shadows; use hard drop-shadows or solid borders."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#10B981] text-white rounded-none font-bold tracking-wide hover:bg-[#059669] transition-colors px-6 py-3",
+      "secondary": "bg-transparent border border-[#272A30] text-[#F3F4F6] rounded-none hover:bg-[#16181D] transition-colors"
+    },
+    "cards": {
+      "anime_card": "Relative positioning, aspect-[2/3] for cover art, zero border radius, inner gradient overlay at bottom for text contrast. Hover state: slight scale-up of image, border color shifts to Emerald."
+    },
+    "navigation": {
+      "header": "Sticky z-50, backdrop-blur-xl bg-[#090A0C]/80, border-b border-[#272A30]. Light/dark mix context: when scrolling into light sections, header remains dark for contrast."
+    },
+    "forms": {
+      "inputs": "bg-transparent border-b border-[#272A30] rounded-none focus:border-[#10B981] focus:ring-0 transition-all text-white placeholder-[#9CA3AF]"
+    },
+    "drawer": {
+      "filters": "Right-side drawer. Stark white background (#FFFFFF) with dark text (#111827) to create the 'Light/Dark Mix' contrast against the dark main catalog."
+    }
+  },
+  "motion": {
+    "hover_states": "Crisp and immediate. Images scale by 1.05x. Borders snap to Emerald.",
+    "page_transitions": "Fade in with slight upward translation (framer-motion).",
+    "lists": "Staggered entrance animations."
+  },
+  "media": {
+    "image_treatment": "High contrast. Maximum overlay opacity on hero images bg-black/40. No heavy gradients.",
+    "urls": {
+      "hero_banner": {
+        "url": "https://images.pexels.com/photos/16475310/pexels-photo-16475310.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Stunning sunset sky with silhouetted mountains, used for the main Discover page hero background."
+      },
+      "hero_banner_secondary": {
+        "url": "https://images.pexels.com/photos/12370650/pexels-photo-12370650.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Twilight skyline for profile or category banner."
+      },
+      "anime_cover_placeholder_1": {
+        "url": "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwxfHxhbmltZSUyMGNoYXJhY3RlciUyMHBvcnRyYWl0JTIwYWVzdGhldGljfGVufDB8fHx8MTc3OTQ0NzA4Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract/character placeholder for anime cover art in grids."
+      },
+      "anime_cover_placeholder_2": {
+        "url": "https://images.unsplash.com/photo-1677143016687-8dbb7e71db08?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNDR8MHwxfHNlYXJjaHwyfHxhbmltZSUyMGNoYXJhY3RlciUyMHBvcnRyYWl0JTIwYWVzdGhldGljfGVufDB8fHx8MTc3OTQ0NzA4Nnww&ixlib=rb-4.1.0&q=85",
+        "description": "Alternative abstract placeholder for anime cover art."
+      },
+      "scenery_placeholder": {
+        "url": "https://images.unsplash.com/photo-1660831519595-dd4dafe57a31?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwxfHxhbmltZSUyMHNjZW5lcnklMjBzdW5zZXQlMjBhZXN0aGV0aWN8ZW58MHx8fHwxNzc5NDQ3MDg2fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Scenery placeholder for episode thumbnails or related anime blocks."
+      }
+    }
+  },
+  "specific_page_instructions": {
+    "home_discover": "Use a massive, edge-to-edge hero section with `hero_banner`. The carousels below (Top Airing, etc.) should use strict grid alignments. Section headers should be large `Cabinet Grotesk` typography.",
+    "browse_catalog": "Grid of anime cards. The filters drawer must pop out as a stark white (#FFFFFF) sidebar over the dark app, providing the requested 'light/dark mix'.",
+    "anime_detail": "Split layout. The top is a full-bleed banner. Below, left column (dark mode) contains the YouTube trailer embed and episodes. Right column (light mode panel, #F8F9FA) contains info, stats, and the comments thread. This reinforces the editorial, asymmetric manga look.",
+    "profile": "Clean bento-box grid for Watchlist, Favorites, and Ratings."
+  },
+  "testing_requirements": "All interactive elements, buttons, links, form inputs, tabs, and filter checkboxes MUST have role-based `data-testid` attributes (e.g., `data-testid=\"play-trailer-button\"`, `data-testid=\"filter-drawer-toggle\"`).",
+  "tech_stack_notes": "Use Lucide React for icons. Use standard HTML/Tailwind for the marketing/hero areas, and heavily customized Shadcn UI components for dropdowns, tabs, and drawers."
+}

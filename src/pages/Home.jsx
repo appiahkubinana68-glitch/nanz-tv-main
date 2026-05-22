@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { api } from "../api";
 import AnimeCard from "../components/AnimeCard";
 
-// ✅ FALLBACK: ALWAYS SHOW SOMETHING
 const fallback = [
   {"mal_id":16498,"title":"Attack on Titan","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/10/47347l.jpg"}}},
   {"mal_id":20,"title":"Naruto","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/13/17405l.jpg"}}},
@@ -13,9 +12,7 @@ const fallback = [
   {"mal_id":400,"title":"Bleach","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/3/72034l.jpg"}}},
   {"mal_id":235,"title":"Hunter x Hunter","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/11/33667l.jpg"}}},
   {"mal_id":21,"title":"One Piece","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/6/73245l.jpg"}}},
-  {"mal_id":97940,"title":"Jujutsu Kaisen","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/1171/142503l.jpg"}}},
-  {"mal_id":1,"title":"Cowboy Bebop","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/4/19644l.jpg"}}},
-  {"mal_id":223,"title":"Dragon Ball Z","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/12/11396l.jpg"}}}
+  {"mal_id":97940,"title":"Jujutsu Kaisen","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/1171/142503l.jpg"}}}
 ];
 
 export default function Home() {
@@ -45,17 +42,16 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold text-center mb-6 text-white">Nanz.to — Watch Anime Free</h1>
+      <h1 className="text-3xl font-bold text-center mb-6 text-white">Nanz.to — Official Anime Streaming</h1>
       
       <input
         type="text"
-        placeholder="🔍 Search any anime..."
+        placeholder="🔍 Search any anime — all official sources"
         value={search}
         onChange={handleSearch}
         className="w-full p-4 mb-8 rounded-lg bg-gray-800 text-white border border-gray-700"
       />
 
-      {/* ✅ 18,000+ ANIME GRID */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {animeList.map(anime => (
           <AnimeCard 
@@ -63,13 +59,13 @@ export default function Home() {
             anime={{
               id: anime.mal_id,
               title: anime.title || "Untitled",
-              image: anime.images?.jpg?.large_image_url || "https://via.placeholder.com/300x450?text=Anime"
+              image: anime.images?.jpg?.large_image_url || "https://via.placeholder.com/300x450?text=Anime",
+              is_official: true
             }} 
           />
         ))}
       </div>
 
-      {/* ✅ LOAD MORE → NEXT 24 → 18,000+ */}
       {!search && (
         <button 
           onClick={() => setPage(p => p+1)} 

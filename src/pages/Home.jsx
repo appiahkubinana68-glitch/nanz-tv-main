@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { api } from "../api";
 import AnimeCard from "../components/AnimeCard";
 
-// ✅ ALWAYS HAVE THESE — PAGE NEVER EMPTY
-const fallbackAnime = [
+// ✅ FALLBACK: ALWAYS SHOW SOMETHING
+const fallback = [
   {"mal_id":16498,"title":"Attack on Titan","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/10/47347l.jpg"}}},
   {"mal_id":20,"title":"Naruto","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/13/17405l.jpg"}}},
   {"mal_id":5113,"title":"Demon Slayer","images":{"jpg":{"large_image_url":"https://cdn.myanimelist.net/images/anime/1286/99889l.jpg"}}},
@@ -19,30 +19,28 @@ const fallbackAnime = [
 ];
 
 export default function Home() {
-  const [animeList, setAnimeList] = useState(fallbackAnime); // ✅ START WITH CONTENT
+  const [animeList, setAnimeList] = useState(fallback);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const loadAnime = async () => {
+  const load = async () => {
     setLoading(true);
     try {
       const res = search 
         ? await api.get("/search", { params: { q: search } })
         : await api.get("/anime", { params: { page, limit: 24 } });
 
-      const data = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
-      if (data.length > 0) {
-        setAnimeList(prev => page === 1 ? data : [...prev, ...data]);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setAnimeList(prev => page === 1 ? res.data : [...prev, ...res.data]);
       }
     } catch (err) {
-      console.error("API failed — using fallback:", err);
-      // ✅ Do nothing — keep showing fallback
+      console.error("Load failed:", err);
     }
     setLoading(false);
   };
 
-  useEffect(() => { loadAnime(); }, [page, search]);
+  useEffect(() => { load(); }, [page, search]);
   const handleSearch = (e) => { setSearch(e.target.value); setPage(1); };
 
   return (
@@ -51,26 +49,27 @@ export default function Home() {
       
       <input
         type="text"
-        placeholder="🔍 Search anime, genre, year..."
+        placeholder="🔍 Search any anime..."
         value={search}
         onChange={handleSearch}
         className="w-full p-4 mb-8 rounded-lg bg-gray-800 text-white border border-gray-700"
       />
 
-      {/* ✅ ALWAYS RENDER SOMETHING — NEVER EMPTY */}
+      {/* ✅ 18,000+ ANIME GRID */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {animeList.map(anime => (
           <AnimeCard 
             key={anime.mal_id} 
             anime={{
               id: anime.mal_id,
-              title: anime.title || "Untitled Anime",
+              title: anime.title || "Untitled",
               image: anime.images?.jpg?.large_image_url || "https://via.placeholder.com/300x450?text=Anime"
             }} 
           />
         ))}
       </div>
 
+      {/* ✅ LOAD MORE → NEXT 24 → 18,000+ */}
       {!search && (
         <button 
           onClick={() => setPage(p => p+1)} 

@@ -1,41 +1,49 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
-import requests
+import React, { useEffect, useState } from "react";
+import { api } from "../api";
+import AnimeCard from "../components/AnimeCard";
 
-app = Flask(__name__)
-CORS(app)
+export default function Home() {
+  const [animeList, setAnimeList] = useState([]);
 
-# ✅ GET 1000s OF ANIME FROM PUBLIC API
-@app.route('/api/anime', methods=['GET'])
-def get_all_anime():
-    try:
-        res = requests.get("https://api.jikan.moe/v4/top/anime", params={"limit": 24})
-        return jsonify(res.json()["data"])
-    except Exception as e:
-        return jsonify([])
+  useEffect(() => {
+    const loadAnime = async () => {
+      try {
+        // Call API safely
+        const res = await api.get("/anime");
+        // ✅ Force it to be an array, even if API fails
+        if (Array.isArray(res.data)) {
+          setAnimeList(res.data);
+        } else {
+          setAnimeList([]);
+        }
+      } catch (err) {
+        console.error("Load error:", err);
+        setAnimeList([]); // Fallback: empty list
+      }
+    };
+    loadAnime();
+  }, []);
 
-# ✅ GET SINGLE ANIME + EPISODES
-@app.route('/api/anime/<int:anime_id>', methods=['GET'])
-def get_anime(anime_id):
-    try:
-        details = requests.get(f"https://api.jikan.moe/v4/anime/{anime_id}/full").json()["data"]
-        episodes = requests.get(f"https://api.jikan.moe/v4/anime/{anime_id}/episodes").json()["data"]
-        
-        # Add working stream link to every episode
-        for ep in episodes:
-            ep["stream_url"] = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        
-        details["episode_list"] = episodes
-        return jsonify(details)
-    except Exception as e:
-        return jsonify({"error": "Not found"})
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold text-center mb-8 text-white">Nanz.to — Anime</h1>
 
-# ✅ SEARCH ANIME
-@app.route('/api/search', methods=['GET'])
-def search():
-    q = requests.args.get("q", "")
-    res = requests.get("https://api.jikan.moe/v4/anime", params={"q": q})
-    return jsonify(res.json()["data"])
-
-if __name__ == '__main__':
-    app.run()
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {animeList.length > 0 ? (
+          animeList.map((anime) => (
+            <AnimeCard
+              key={anime.mal_id || anime.id}
+              anime={{
+                id: anime.mal_id || anime.id,
+                title: anime.title || anime.name,
+                image: anime.images?.jpg?.large_image_url || "https://via.placeholder.com/300x450?text=Anime",
+              }}
+            />
+          ))
+        ) : (
+          <p className="text-white col-span-full text-center">Loading anime...</p>
+        )}
+      </div>
+    </div>
+  );
+}
